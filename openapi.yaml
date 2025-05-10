@@ -5,13 +5,13 @@ info:
   description: |
     Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun (huhtikuu 2022 – huhtikuu 2025).
 servers:
-  - url: https://api.tutkihallintoa.fi/valtiontalous/v1
+  - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
 
 paths:
-  /budjettitaloudentapahtumat:
+  /budjettidata:
     get:
       operationId: getBudgetData
-      summary: Hakee budjettitalouden tapahtumia Tutkihallintoa-rajapinnasta.
+      summary: Proxy Tutkihallintoa-rajapintaan
       parameters:
         - name: yearFrom
           in: query
