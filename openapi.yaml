@@ -1,98 +1,113 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
-  title: ValtioData API (CSV Import Focus v2)
-  version: "0.7.0" # Uusi versionumero tätä yritystä varten
-  description: API for Finnish state budget data. Returns CSV. All schema descriptions and examples are ASCII for maximum import compatibility. Parameterized queries (at least yearFrom and yearTo) are required.
-
+  title: Budjettihaukka GPT API
+  description: Hakee ja muuntaa valtiontalouden dataa Tutkihallintoa.fi-palvelusta ChatGPT:n käyttöön.
+  version: "v1.0.1" # Voit päivittää versionumeroa tarvittaessa
 servers:
-  - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
-    description: Production API Server for Budget Data.
-
+  - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app # SINUN CLOUD RUN FUNKTION URL
 paths:
-  /budjettidata:
+  /: # Oletetaan, että funktiosi vastaa juuripolkuun.
     get:
-      operationId: getParameterizedBudgetDataCsvV2
-      summary: Get budget data as CSV (parameters required).
-      description: |
-        Fetches Finnish state budget data based on specified query parameters. 
-        The 'yearFrom' and 'yearTo' parameters are mandatory.
-        The response is a CSV formatted string. The first row typically contains headers.
-        Data is available for the period April 2022 - April 2025.
+      summary: Hae valtiontalouden tapahtumia
+      description: Noutaa dataa Tutkihallintoa.fi API:sta annettujen parametrien perusteella ja palauttaa sen JSON-muodossa.
+      operationId: budjettidataHandler # TAI esim. haeValtiontalousDataa. Selkeä ja uniikki.
       parameters:
-        - name: yearFrom
-          in: query
-          description: "Start year for the query. Required. Integer. Example: 2023. Range: 2022-2025."
-          required: true
-          schema:
-            type: integer
-            minimum: 2022
-            maximum: 2025
-          example: 2023
-        - name: yearTo
-          in: query
-          description: "End year for the query. Required. Integer. Example: 2023. Range: 2022-2025."
-          required: true
-          schema:
-            type: integer
-            minimum: 2022
-            maximum: 2025
-          example: 2023
-        - name: monthFrom
-          in: query
-          description: "Start month (1-12). Integer. Example: 1. If yearFrom is 2022, monthFrom must be >= 4."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 12
-          example: 4
-        - name: monthTo
-          in: query
-          description: "End month (1-12). Integer. Example: 12. If yearTo is 2025, monthTo must be <= 4."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 12
-          example: 12
+        # Tässä listataan kaikki parametrit, joita funktio voi ottaa vastaan
+        # Nämä vastaavat ALLOWED_PARAMS-listaa Python-koodissa.
         - name: momentti
           in: query
-          description: "Budget item identifier (e.g., '28.50.01') or part of its name. String. Example: '28.50.01'."
+          required: false
+          description: Talousarvion momentin tunnus.
           schema:
             type: string
-          example: "28.50.01" 
+        - name: luku
+          in: query
+          required: false
+          description: Talousarvion luvun tunnus.
+          schema:
+            type: string
+        - name: paaluokka
+          in: query
+          required: false
+          description: Talousarvion pääluokan tunnus.
+          schema:
+            type: string
+        - name: takptili # Muista lisätä kaikki ALLOWED_PARAMS tänne
+          in: query
+          required: false
+          description: Tarkemman kirjanpidon tilin tunnus.
+          schema:
+            type: string
+        - name: tililaji
+          in: query
+          required: false
+          description: Tililajin tunnus.
+          schema:
+            type: string
+        # --- JATKA MUIDEN ALLOWED_PARAMS PARAMETRIEN LISÄÄMISTÄ VASTAAVASTI ---
+        # Esimerkiksi: tiliryhma, ylatiliryhma, tililuokka, lkptili
         - name: hallinnonala
           in: query
-          description: "Administrative branch ID (e.g., '12') or name. String. Example: '12'."
+          required: false
+          description: Hallinnonalan koodi.
           schema:
             type: string
-          example: "12" 
         - name: tilivirasto
           in: query
-          description: "Accounting office ID (e.g., '286') or name. String. Example: '286'."
+          required: false
+          description: Tiliviraston tunnus.
           schema:
             type: string
-          example: "286" 
+        - name: monthFrom
+          in: query
+          required: false
+          description: Aloituskuukausi (1-12).
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 12
+        - name: monthTo
+          in: query
+          required: false
+          description: Lopetuskuukausi (1-12).
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 12
+        - name: yearFrom
+          in: query
+          required: false
+          description: Aloitusvuosi (esim. 2023).
+          schema:
+            type: integer
+            format: int32
+        - name: yearTo
+          in: query
+          required: false
+          description: Lopetusvuosi (esim. 2024).
+          schema:
+            type: integer
+            format: int32
       responses:
-        "200":
-          description: |
-            Successful CSV response. The first row typically contains column headers.
-            Comma (,) is used as a delimiter. Data fields are standard CSV quoted if they contain delimiters, quotes, or newlines.
+        '200':
+          description: Onnistunut haku. Palauttaa listan tapahtumia JSON-muodossa.
           content:
-            text/csv:
+            application/json:
               schema:
-                type: string
-                # This example string within the YAML is pure ASCII, including headers,
-                # to ensure the YAML file itself is as simple as possible for the importer.
-                # The actual API response from your server can and should use UTF-8 and proper Finnish characters.
-                example: |
-                  Vuosi,Kk,Hallinnonala,Momentti_TunnusP,Momentti_sNimi,Voimassaoleva_talousarvio,Nettokertyma
-                  2023,6,"Opetus ja kulttuuriministerio","29.40.51","Valtion taidemuseo (arviomaararaha)",100000.00,50000.00
-                  2024,1,"Sosiaali ja terveysministerio","33.10.01","Tyottomyysturvan menot (siirtomaararaha)",2500000000.00,200000000.00
-        "400":
-          description: "Bad Request. This can occur if required parameters (like 'yearFrom', 'yearTo') are missing or if parameter values are invalid (e.g., year out of range)."
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: "Error: Required parameters are missing or invalid. Please provide valid 'yearFrom' and 'yearTo'."
-        # Muut virhevastaukset (500 jne.) on jätetty pois tästä versiosta importoinnin yksinkertaistamiseksi.
-        # Ne voidaan lisätä myöhemmin, kun perusimportointi toimii.
+                type: array
+                items:
+                  type: object
+                  # Tähän voi tarkentaa objektin rakennetta (properties),
+                  # jos tiedät tarkalleen CSV-sarakkeiden otsikot.
+        # ... (Muut vastauskoodit, kuten 4xx, 5xx, kuten aiemmassa esimerkissä) ...
+components:
+  schemas:
+    ErrorResponse: # Esimerkki virhevastaukselle
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
