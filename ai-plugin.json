@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Budjettihaukka",
+  "name_for_model": "budjettihaukka_plugin",
+  "description_for_human": "Analysoi Suomen valtion taloustietoja luonnollisella kielellä.",
+  "description_for_model": "Käytä tätä hakemaan momentti- ja hallinnonala-kohtaisia budjettitietoja vuosilta 1998–2025 Tutkihallintoa-rajapinnasta.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://juntunen-ai.github.io/budjettihaukka-gpt/openapi.yaml"
+  },
+  "logo_url": "https://juntunen-ai.github.io/budjettihaukka-gpt/logo.png",
+  "contact_email": "harri.juntunen@gofore.com",
+  "legal_info_url": "https://juntunen-ai.github.io/budjettihaukka-gpt/legal.html"
+}
