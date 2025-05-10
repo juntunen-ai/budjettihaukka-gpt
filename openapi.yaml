@@ -5,7 +5,7 @@ info:
   description: |
     Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun.
 servers:
-  url: https://api.tutkihallintoa.fi/valtiontalous/v1
+ - url: https://api.tutkihallintoa.fi/valtiontalous/v1
 
 paths:
   /budjettidata:
