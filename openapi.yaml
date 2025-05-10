@@ -1,17 +1,40 @@
+openapi: 3.1.0
+info:
+  title: ValtioData Budjettihaukka API
+  version: "0.2" # Päivitetty versionumero heijastamaan muutoksia
+  description: |
+    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun.
+    Data on peräisin Tutkihallintoa.fi-palvelusta ja kattaa aikavälin huhtikuu 2022 – huhtikuu 2025.
+    Rajapinta palauttaa dataa CSV-muodossa. Sekä API-kuvaukset että itse CSV-data voivat sisältää 
+    suomalaisia merkkejä (ä, ö, å). On suositeltavaa, että sekä palvelin että asiakasohjelma 
+    käsittelevät dataa UTF-8 enkoodattuna.
+  contact:
+    name: Kehittäjätiimi (Esimerkki)
+    email: tuki@example.com # Korvaa oikealla kontaktilla tarvittaessa
+
+servers:
+  - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
+    description: Tuotantoympäristö Budjettihaukka-GPT:n backend-palvelulle.
+
 paths:
   /budjettidata:
     get:
-      operationId: getBudgetData
-      summary: Hae valtion budjettitalouden tapahtumia määritellyillä kriteereillä (CSV-muodossa).
+      operationId: getBudgetDataCsv
+      summary: Hae valtion budjettitalouden tapahtumia CSV-muodossa.
       description: |
-        Noutaa listan Suomen valtion budjettitalouden tapahtumista CSV-muodossa. 
-        Huomioi, että dataa on saatavilla vain aikaväliltä huhtikuu 2022 – huhtikuu 2025.
-        Tarkenna hakua käyttämällä alla olevia parametreja. Ilman parametreja haku voi olla hidas tai palauttaa liikaa dataa.
-        Vastaus on CSV-muotoinen merkkijono, jossa ensimmäinen rivi on otsikkorivi.
+        Noutaa listan Suomen valtion budjettitalouden tapahtumista määritellyillä kriteereillä.
+        Vastaus palautetaan CSV-muotoisena merkkijonona, joka on UTF-8 enkoodattu ja voi sisältää 
+        suomalaisia merkkejä kuten ä, ö, å. Ensimmäinen rivi CSV-datassa on aina otsikkorivi.
+        Kentät on erotettu pilkulla (,). Jos kentän arvo sisältää pilkun, rivinvaihdon tai 
+        lainausmerkin, kentän arvo on ympäröity tuplalainausmerkeillä ("). 
+        Lainausmerkit kentän sisällä kahdennetaan (esim. ""teksti"" -> "teksti").
+        Dataa on saatavilla aikaväliltä huhtikuu 2022 – huhtikuu 2025.
+        Tarkenna hakua parametreilla välttääksesi liian suuria tai hitaita vastauksia.
       parameters:
         - name: yearFrom
           in: query
-          description: "Aloitusvuosi haulle. Sallittu aikaväli: 2022-2025. Huomioi, että data alkaa huhtikuusta 2022."
+          description: "Aloitusvuosi haulle. Pakollinen. Sallittu aikaväli: 2022-2025."
+          required: true # Lisätty robustisuuden vuoksi, jos tämä on aina pakollinen. Muuten poista.
           schema:
             type: integer
             minimum: 2022
@@ -19,23 +42,24 @@ paths:
           example: 2023
         - name: yearTo
           in: query
-          description: "Päättymisvuosi haulle. Sallittu aikaväli: 2022-2025. Huomioi, että data päättyy huhtikuuhun 2025."
+          description: "Päättymisvuosi haulle. Pakollinen. Sallittu aikaväli: 2022-2025."
+          required: true # Lisätty robustisuuden vuoksi.
           schema:
             type: integer
             minimum: 2022
             maximum: 2025
-          example: 2024
+          example: 2023
         - name: monthFrom
           in: query
-          description: "Aloituskuukausi haulle (1-12). Jos yearFrom on 2022, monthFrom tulee olla >= 4."
+          description: "Aloituskuukausi haulle (1-12). Huomioi, että jos 'yearFrom' on 2022, 'monthFrom' täytyy olla >= 4 (huhtikuu)."
           schema:
             type: integer
             minimum: 1
             maximum: 12
-          example: 1
+          example: 4
         - name: monthTo
           in: query
-          description: "Päättymiskuukausi haulle (1-12). Jos yearTo on 2025, monthTo tulee olla <= 4."
+          description: "Päättymiskuukausi haulle (1-12). Huomioi, että jos 'yearTo' on 2025, 'monthTo' täytyy olla <= 4 (huhtikuu)."
           schema:
             type: integer
             minimum: 1
@@ -44,51 +68,101 @@ paths:
         - name: momentti
           in: query
           description: |
-            Talousarvion momentin tunnus tai osa momentin nimestä. 
-            Tarkka tunnus (esim. '28.50.01') antaa tarkimman tuloksen. 
-            Voit myös kokeilla hakua momentin nimen osalla (esim. 'Yleinen tuomioistuinlaitos').
+            Talousarvion momentin tunnus (esim. '28.50.01', '33.10.01') tai osa momentin nimestä 
+            (esim. 'Yleinen tuomioistuinlaitos', 'Työttömyysetuudet', 'Ympäristönsuojelu'). 
+            Haku on yleensä kirjainkoosta riippumaton. Voi sisältää suomalaisia merkkejä (ä, ö, å).
           schema:
             type: string
-          example: "28.50.01"
+          example: "Työttömyysturvan menot"
         - name: hallinnonala
           in: query
           description: |
-            Hallinnonalan numeerinen tunnus. Esimerkiksi '12' vastaa Oikeusministeriötä.
-            Kysy tarvittaessa käyttäjältä tarkempaa hallinnonalaa, jos et ole varma tunnuksesta.
-            Yleisimpiä hallinnonaloja:
-            - 1: Eduskunta
-            - 2: Tasavallan presidentti
-            - 3: Valtioneuvoston kanslia
-            - 4: Ulkoministeriö
-            - 12: Oikeusministeriö
-            - 25: Sisäministeriö
-            - 26: Puolustusministeriö
-            - 27: Valtiovarainministeriö
-            - 29: Opetus- ja kulttuuriministeriö
-            - 30: Maa- ja metsätalousministeriö
-            - 31: Liikenne- ja viestintäministeriö
-            - 32: Työ- ja elinkeinoministeriö
-            - 33: Sosiaali- ja terveysministeriö
-            - 35: Ympäristöministeriö
+            Hallinnonalan numeerinen tunnus tai nimi. Tarkista palvelimen dokumentaatiosta tuetut arvot.
+            Esimerkkejä yleisimmistä tunnuksista:
+            - '12': Oikeusministeriö
+            - '27': Valtiovarainministeriö
+            - '29': Opetus- ja kulttuuriministeriö
+            - '33': Sosiaali- ja terveysministeriö
+            (Huom: Tarkista backendistä, hyväksyykö se numeron vai merkkijonon, esim. '12' vs 12)
           schema:
-            type: integer 
-          example: 12
+            type: string # Muutettu stringiksi joustavuuden vuoksi (voi olla numero tai nimi)
+          example: "29" # Esimerkki Opetus- ja kulttuuriministeriöstä
         - name: tilivirasto
           in: query
           description: |
-            Tiliviraston numeerinen tunnus. Esimerkiksi '286' vastaa Tuomioistuinlaitosta. 
-            Tämä on tarkempi kuin hallinnonala. Kysy käyttäjältä, jos et ole varma tunnuksesta.
+            Tiliviraston numeerinen tunnus tai nimi. Tämä on tarkempi kuin hallinnonala.
+            Esimerkiksi '286' (Tuomioistuinlaitos) tai sen nimi.
+            (Huom: Tarkista backendistä, hyväksyykö se numeron vai merkkijonon)
           schema:
-            type: integer
-          example: 286
+            type: string # Muutettu stringiksi joustavuuden vuoksi
+          example: "Tuomioistuinlaitos"
       responses:
         "200":
-          description: Lista valtion budjettitalouden tapahtumista CSV-muodossa. Jokainen rivi edustaa yhtä tapahtumaa ja sarakkeet on erotettu pilkuilla. Ensimmäinen rivi sisältää sarakeotsikot.
+          description: |
+            Onnistunut vastaus. Lista valtion budjettitalouden tapahtumista CSV-muodossa.
+            Data on UTF-8 enkoodattua ja voi sisältää suomalaisia merkkejä (ä, ö, å).
+            Ensimmäinen rivi sisältää sarakeotsikot. Pilkku (,) toimii erottimena.
+            Tekstikentät, jotka sisältävät pilkun, lainausmerkin tai rivinvaihdon, ovat 
+            RFC 4180 -standardin mukaisesti lainausmerkeissä.
           content:
-            text/csv:
+            text/csv; charset=utf-8: # Tarkennetaan charset tässä
               schema:
                 type: string
+                format: csv # Informatiivinen, kertoo että kyseessä on CSV-dataa
                 example: |
                   Vuosi,Kk,Hallinnonala,Momentti_TunnusP,Momentti_sNimi,Voimassaoleva_talousarvio,Nettokertymä
-                  2023,1,"Oikeusministeriö","28.50.01","Yleinen tuomioistuinlaitos",100000.00,50000.00
-                  2023,2,"Oikeusministeriö","28.50.01","Yleinen tuomioistuinlaitos",100000.00,60000.00
+                  2023,6,"Opetus- ja kulttuuriministeriö","29.40.51","Valtion taidemuseo (arviomääräraha)",100000.00,50000.00
+                  2024,1,"Sosiaali- ja terveysministeriö","33.10.01","Työttömyysturvan menot (siirtomääräraha)",2500000000.00,200000000.00
+                  2022,4,"Ympäristöministeriö","35.10.02","Ympäristönsuojelu ja luonnonsuojelu",7500000.00,1200000.00
+                  # Yllä oleva data on esimerkki. Todelliset sarakkeet ja arvot voivat vaihdella.
+                  # Tarkista ajantasaiset sarakenimet ja niiden merkitykset tarvittaessa Tutkihallintoa.fi-palvelusta.
+        "400":
+          description: |
+            Virheellinen pyyntö. Jokin hakuparametreista on virheellinen tai puuttuu.
+            Esimerkiksi vuosiluku on sallitun alueen ulkopuolella tai pakollinen parametri puuttuu.
+            Vastauksen runko sisältää tarkemman kuvauksen virheestä tekstimuodossa.
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                example: "Virheellinen parametri 'yearFrom'. Arvon tulee olla välillä 2022-2025."
+        "404":
+          description: |
+            Resurssia ei löytynyt. Annetuilla hakuehdoilla ei löytynyt dataa.
+            Tämä ei välttämättä ole virhe, vaan dataa ei yksinkertaisesti ole olemassa kyseisillä kriteereillä.
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                example: "Annetuilla hakuehdoilla ei löytynyt budjettidataa."
+        "500":
+          description: |
+            Sisäinen palvelinvirhe. Palvelimella tapahtui odottamaton virhe pyyntöä käsiteltäessä.
+            Tämä voi johtua ongelmasta backend-sovelluksessa.
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                example: "Sisäinen palvelinvirhe. Yritä myöhemmin uudelleen. Jos ongelma jatkuu, ota yhteyttä tukeen."
+        "503":
+          description: |
+            Palvelu ei ole tavoitettavissa. Taustajärjestelmä (esim. Tutkihallintoa.fi) saattaa olla alhaalla tai ylikuormittunut.
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                example: "Taustapalvelu ei ole tällä hetkellä tavoitettavissa. Yritä myöhemmin uudelleen."
+
+# Voit lisätä myös components-osion, jos haluat uudelleenkäyttää skeemoja tai parametreja,
+# mutta näin yksinkertaisessa tapauksessa se ei ole välttämätöntä.
+# components:
+#   schemas:
+#     ErrorResponse:
+#       type: object
+#       properties:
+#         errorCode:
+#           type: string
+#           example: "INVALID_PARAMETER"
+#         errorMessage:
+#           type: string
+#           example: "Virheellinen parametri 'yearFrom'."
