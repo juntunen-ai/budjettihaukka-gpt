@@ -1,0 +1,95 @@
+openapi: 3.1.0
+info:
+  title: ValtioData plugin API
+  version: "0.1"
+  description: |
+    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun.
+servers:
+  - url: https://juntunen-ai.github.io/budjettihaukka-gpt
+paths:
+  /budjettidata:
+    get:
+      operationId: getBudgetData
+      summary: Hakee budjettitalouden tapahtumia Tutkihallintoa-rajapinnasta.
+      parameters:
+        - name: yearFrom
+          in: query
+          schema:
+            type: integer
+        - name: yearTo
+          in: query
+          schema:
+            type: integer
+        - name: monthFrom
+          in: query
+          schema:
+            type: integer
+        - name: monthTo
+          in: query
+          schema:
+            type: integer
+        - name: momentti
+          in: query
+          schema:
+            type: string
+        - name: hallinnonala
+          in: query
+          schema:
+            type: integer
+        - name: tilivirasto
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista valtion budjettitalouden tapahtumista
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Vuosi:
+                          type: integer
+                        Kk:
+                          type: integer
+                        Hallinnonala:
+                          type: string
+                        Kirjanpitoyksikkö:
+                          type: string
+                        PaaluokkaOsasto_sNimi:
+                          type: string
+                        Luku_sNimi:
+                          type: string
+                        Momentti_TunnusP:
+                          type: string
+                        Momentti_sNimi:
+                          type: string
+                        Tililuokka_sNimi:
+                          type: string
+                        Tiliryhma_sNimi:
+                          type: string
+                        Tililaji_sNimi:
+                          type: string
+                        Alkuperäinen_talousarvio:
+                          type: number
+                        Lisätalousarvio:
+                          type: number
+                        Voimassaoleva_talousarvio:
+                          type: number
+                        Käytettävissä:
+                          type: number
+                        Alkusaldo:
+                          type: number
+                        Nettokertymä_ko_vuodelta:
+                          type: number
+                        NettoKertymaAikVuosSiirrt:
+                          type: number
+                        Nettokertymä:
+                          type: number
+                        Loppusaldo:
+                          type: number
