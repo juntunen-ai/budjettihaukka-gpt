@@ -3,7 +3,9 @@ info:
   title: ValtioData plugin API
   version: "0.1"
   description: |
-    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun (huhtikuu 2022 – huhtikuu 2025).
+    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun. 
+    Data on saatavilla aikaväliltä huhtikuu 2022 – huhtikuu 2025. 
+    Käytä parametreja tarkentaaksesi hakua esimerkiksi vuosiin, kuukausiin, momentteihin tai hallinnonaloihin.
 servers:
   - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
 
@@ -11,36 +13,84 @@ paths:
   /budjettidata:
     get:
       operationId: getBudgetData
-      summary: Proxy Tutkihallintoa-rajapintaan
+      summary: Hae valtion budjettitalouden tapahtumia määritellyillä kriteereillä.
+      description: |
+        Noutaa listan Suomen valtion budjettitalouden tapahtumista. 
+        Huomioi, että dataa on saatavilla vain aikaväliltä huhtikuu 2022 – huhtikuu 2025.
+        Tarkenna hakua käyttämällä alla olevia parametreja. Ilman parametreja haku voi olla hidas tai palauttaa liikaa dataa.
       parameters:
         - name: yearFrom
           in: query
+          description: "Aloitusvuosi haulle. Sallittu aikaväli: 2022-2025. Huomioi, että data alkaa huhtikuusta 2022."
           schema:
             type: integer
+            minimum: 2022
+            maximum: 2025
+          example: 2023
         - name: yearTo
           in: query
+          description: "Päättymisvuosi haulle. Sallittu aikaväli: 2022-2025. Huomioi, että data päättyy huhtikuuhun 2025."
           schema:
             type: integer
+            minimum: 2022
+            maximum: 2025
+          example: 2024
         - name: monthFrom
           in: query
+          description: "Aloituskuukausi haulle (1-12). Jos yearFrom on 2022, monthFrom tulee olla >= 4."
           schema:
             type: integer
+            minimum: 1
+            maximum: 12
+          example: 1
         - name: monthTo
           in: query
+          description: "Päättymiskuukausi haulle (1-12). Jos yearTo on 2025, monthTo tulee olla <= 4."
           schema:
             type: integer
+            minimum: 1
+            maximum: 12
+          example: 12
         - name: momentti
           in: query
+          description: |
+            Talousarvion momentin tunnus tai osa momentin nimestä. 
+            Tarkka tunnus (esim. '28.50.01') antaa tarkimman tuloksen. 
+            Voit myös kokeilla hakua momentin nimen osalla (esim. 'Yleinen tuomioistuinlaitos').
           schema:
             type: string
+          example: "28.50.01"
         - name: hallinnonala
           in: query
+          description: |
+            Hallinnonalan numeerinen tunnus. Esimerkiksi '12' vastaa Oikeusministeriötä.
+            Kysy tarvittaessa käyttäjältä tarkempaa hallinnonalaa, jos et ole varma tunnuksesta.
+            Yleisimpiä hallinnonaloja:
+            - 1: Eduskunta (tai 01 jos API vaatii etunollan merkkijonona)
+            - 2: Tasavallan presidentti (tai 02)
+            - 3: Valtioneuvoston kanslia (tai 03)
+            - 4: Ulkoministeriö (tai 04)
+            - 12: Oikeusministeriö
+            - 25: Sisäministeriö
+            - 26: Puolustusministeriö
+            - 27: Valtiovarainministeriö
+            - 29: Opetus- ja kulttuuriministeriö
+            - 30: Maa- ja metsätalousministeriö
+            - 31: Liikenne- ja viestintäministeriö
+            - 32: Työ- ja elinkeinoministeriö
+            - 33: Sosiaali- ja terveysministeriö
+            - 35: Ympäristöministeriö
           schema:
-            type: integer
+            type: integer # Jos API hyväksyy numerot ilman etunollia. Jos vaatii etunollan (esim. '01'), muuta type: string.
+          example: 12
         - name: tilivirasto
           in: query
+          description: |
+            Tiliviraston numeerinen tunnus. Esimerkiksi '286' vastaa Tuomioistuinlaitosta. 
+            Tämä on tarkempi kuin hallinnonala. Kysy käyttäjältä, jos et ole varma tunnuksesta.
           schema:
             type: integer
+          example: 286
       responses:
         "200":
           description: Lista valtion budjettitalouden tapahtumista
