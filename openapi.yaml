@@ -1,23 +1,13 @@
-openapi: 3.1.0
-info:
-  title: ValtioData plugin API
-  version: "0.1"
-  description: |
-    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun. 
-    Data on saatavilla aikaväliltä huhtikuu 2022 – huhtikuu 2025. 
-    Käytä parametreja tarkentaaksesi hakua esimerkiksi vuosiin, kuukausiin, momentteihin tai hallinnonaloihin.
-servers:
-  - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
-
 paths:
   /budjettidata:
     get:
       operationId: getBudgetData
-      summary: Hae valtion budjettitalouden tapahtumia määritellyillä kriteereillä.
+      summary: Hae valtion budjettitalouden tapahtumia määritellyillä kriteereillä (CSV-muodossa).
       description: |
-        Noutaa listan Suomen valtion budjettitalouden tapahtumista. 
+        Noutaa listan Suomen valtion budjettitalouden tapahtumista CSV-muodossa. 
         Huomioi, että dataa on saatavilla vain aikaväliltä huhtikuu 2022 – huhtikuu 2025.
         Tarkenna hakua käyttämällä alla olevia parametreja. Ilman parametreja haku voi olla hidas tai palauttaa liikaa dataa.
+        Vastaus on CSV-muotoinen merkkijono, jossa ensimmäinen rivi on otsikkorivi.
       parameters:
         - name: yearFrom
           in: query
@@ -66,10 +56,10 @@ paths:
             Hallinnonalan numeerinen tunnus. Esimerkiksi '12' vastaa Oikeusministeriötä.
             Kysy tarvittaessa käyttäjältä tarkempaa hallinnonalaa, jos et ole varma tunnuksesta.
             Yleisimpiä hallinnonaloja:
-            - 1: Eduskunta (tai 01 jos API vaatii etunollan merkkijonona)
-            - 2: Tasavallan presidentti (tai 02)
-            - 3: Valtioneuvoston kanslia (tai 03)
-            - 4: Ulkoministeriö (tai 04)
+            - 1: Eduskunta
+            - 2: Tasavallan presidentti
+            - 3: Valtioneuvoston kanslia
+            - 4: Ulkoministeriö
             - 12: Oikeusministeriö
             - 25: Sisäministeriö
             - 26: Puolustusministeriö
@@ -81,7 +71,7 @@ paths:
             - 33: Sosiaali- ja terveysministeriö
             - 35: Ympäristöministeriö
           schema:
-            type: integer # Jos API hyväksyy numerot ilman etunollia. Jos vaatii etunollan (esim. '01'), muuta type: string.
+            type: integer 
           example: 12
         - name: tilivirasto
           in: query
@@ -93,25 +83,12 @@ paths:
           example: 286
       responses:
         "200":
-          description: Lista valtion budjettitalouden tapahtumista
+          description: Lista valtion budjettitalouden tapahtumista CSV-muodossa. Jokainen rivi edustaa yhtä tapahtumaa ja sarakkeet on erotettu pilkuilla. Ensimmäinen rivi sisältää sarakeotsikot.
           content:
-            application/json:
+            text/csv:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    Vuosi:
-                      type: integer
-                    Kk:
-                      type: integer
-                    Hallinnonala:
-                      type: string
-                    Momentti_TunnusP:
-                      type: string
-                    Momentti_sNimi:
-                      type: string
-                    Voimassaoleva_talousarvio:
-                      type: number
-                    Nettokertymä:
-                      type: number
+                type: string
+                example: |
+                  Vuosi,Kk,Hallinnonala,Momentti_TunnusP,Momentti_sNimi,Voimassaoleva_talousarvio,Nettokertymä
+                  2023,1,"Oikeusministeriö","28.50.01","Yleinen tuomioistuinlaitos",100000.00,50000.00
+                  2023,2,"Oikeusministeriö","28.50.01","Yleinen tuomioistuinlaitos",100000.00,60000.00
