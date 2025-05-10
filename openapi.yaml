@@ -1,23 +1,27 @@
 openapi: 3.1.0
 info:
-  title: Simple Budget API (CSV)
-  version: "0.6.0" # Version for this simplified approach
-  description: A simple API to fetch Finnish state budget data in CSV format. All descriptions in this schema are ASCII for maximum import compatibility.
+  title: ValtioData API (CSV Import Focus v2)
+  version: "0.7.0" # Uusi versionumero tätä yritystä varten
+  description: API for Finnish state budget data. Returns CSV. All schema descriptions and examples are ASCII for maximum import compatibility. Parameterized queries (at least yearFrom and yearTo) are required.
 
 servers:
   - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
-    description: API Server URL
+    description: Production API Server for Budget Data.
 
 paths:
   /budjettidata:
     get:
-      operationId: getSimpleBudgetDataCsv
-      summary: Get budget data as CSV.
-      description: Fetches budget data. Response is CSV. Data from April 2022 - April 2025.
+      operationId: getParameterizedBudgetDataCsvV2
+      summary: Get budget data as CSV (parameters required).
+      description: |
+        Fetches Finnish state budget data based on specified query parameters. 
+        The 'yearFrom' and 'yearTo' parameters are mandatory.
+        The response is a CSV formatted string. The first row typically contains headers.
+        Data is available for the period April 2022 - April 2025.
       parameters:
         - name: yearFrom
           in: query
-          description: "Start year. Required. Range: 2022-2025."
+          description: "Start year for the query. Required. Integer. Example: 2023. Range: 2022-2025."
           required: true
           schema:
             type: integer
@@ -26,7 +30,7 @@ paths:
           example: 2023
         - name: yearTo
           in: query
-          description: "End year. Required. Range: 2022-2025."
+          description: "End year for the query. Required. Integer. Example: 2023. Range: 2022-2025."
           required: true
           schema:
             type: integer
@@ -35,7 +39,7 @@ paths:
           example: 2023
         - name: monthFrom
           in: query
-          description: "Start month (1-12). If yearFrom is 2022, must be >= 4."
+          description: "Start month (1-12). Integer. Example: 1. If yearFrom is 2022, monthFrom must be >= 4."
           schema:
             type: integer
             minimum: 1
@@ -43,7 +47,7 @@ paths:
           example: 4
         - name: monthTo
           in: query
-          description: "End month (1-12). If yearTo is 2025, must be <= 4."
+          description: "End month (1-12). Integer. Example: 12. If yearTo is 2025, monthTo must be <= 4."
           schema:
             type: integer
             minimum: 1
@@ -51,34 +55,44 @@ paths:
           example: 12
         - name: momentti
           in: query
-          description: "Budget item ID or part of name (e.g., '28.50.01')."
+          description: "Budget item identifier (e.g., '28.50.01') or part of its name. String. Example: '28.50.01'."
           schema:
             type: string
-          example: "28.50.01"
+          example: "28.50.01" 
         - name: hallinnonala
           in: query
-          description: "Administrative branch ID or name (e.g., '12')."
+          description: "Administrative branch ID (e.g., '12') or name. String. Example: '12'."
           schema:
             type: string
-          example: "12"
+          example: "12" 
         - name: tilivirasto
           in: query
-          description: "Accounting office ID or name (e.g., '286')."
+          description: "Accounting office ID (e.g., '286') or name. String. Example: '286'."
           schema:
             type: string
-          example: "286"
+          example: "286" 
       responses:
         "200":
-          description: Successful CSV response. First row is header. Comma delimited.
+          description: |
+            Successful CSV response. The first row typically contains column headers.
+            Comma (,) is used as a delimiter. Data fields are standard CSV quoted if they contain delimiters, quotes, or newlines.
           content:
             text/csv:
               schema:
                 type: string
-                # This example string within the YAML is pure ASCII.
-                # The actual API response can and should still contain UTF-8 Finnish characters.
+                # This example string within the YAML is pure ASCII, including headers,
+                # to ensure the YAML file itself is as simple as possible for the importer.
+                # The actual API response from your server can and should use UTF-8 and proper Finnish characters.
                 example: |
                   Vuosi,Kk,Hallinnonala,Momentti_TunnusP,Momentti_sNimi,Voimassaoleva_talousarvio,Nettokertyma
                   2023,6,"Opetus ja kulttuuriministerio","29.40.51","Valtion taidemuseo (arviomaararaha)",100000.00,50000.00
                   2024,1,"Sosiaali ja terveysministerio","33.10.01","Tyottomyysturvan menot (siirtomaararaha)",2500000000.00,200000000.00
-        # For simplicity in this import attempt, explicit error responses (400, 500 etc.) are omitted.
-        # They can be added back once basic import is successful.
+        "400":
+          description: "Bad Request. This can occur if required parameters (like 'yearFrom', 'yearTo') are missing or if parameter values are invalid (e.g., year out of range)."
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error: Required parameters are missing or invalid. Please provide valid 'yearFrom' and 'yearTo'."
+        # Muut virhevastaukset (500 jne.) on jätetty pois tästä versiosta importoinnin yksinkertaistamiseksi.
+        # Ne voidaan lisätä myöhemmin, kun perusimportointi toimii.
