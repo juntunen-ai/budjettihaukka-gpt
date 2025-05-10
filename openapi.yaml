@@ -1,30 +1,23 @@
 openapi: 3.1.0
 info:
-  title: ValtioData API Budjettidatalle (CSV)
-  version: "0.5.0" # Uusi versionumero suomenkielisillä kuvauksilla
-  description: |
-    Rajapinta Suomen valtion budjettitalouden tietojen hakemiseen. 
-    Palauttaa dataa CSV-muodossa. Tiedot ovat saatavilla aikaväliltä huhtikuu 2022 – huhtikuu 2025.
-    Tämä YAML-tiedosto on tallennettu UTF-8-muodossa.
+  title: Simple Budget API (CSV)
+  version: "0.6.0" # Version for this simplified approach
+  description: A simple API to fetch Finnish state budget data in CSV format. All descriptions in this schema are ASCII for maximum import compatibility.
 
 servers:
   - url: https://budjettihaukka-gpt-272775413944.europe-north1.run.app
-    description: Tuotantopalvelin Budjettihaukka-GPT:n rajapinnalle.
+    description: API Server URL
 
 paths:
   /budjettidata:
     get:
-      operationId: getBudgetDataCsvFinnishDesc
-      summary: Hae valtion budjettidataa CSV-muodossa.
-      description: |
-        Noutaa listan Suomen valtion budjettitalouden tapahtumista määritellyillä kriteereillä.
-        Vastaus on CSV-muotoinen merkkijono. Ensimmäinen rivi on otsikkorivi.
-        Dataa on saatavilla aikaväliltä huhtikuu 2022 – huhtikuu 2025.
-        Käytä parametreja haun rajaamiseen.
+      operationId: getSimpleBudgetDataCsv
+      summary: Get budget data as CSV.
+      description: Fetches budget data. Response is CSV. Data from April 2022 - April 2025.
       parameters:
         - name: yearFrom
           in: query
-          description: "Aloitusvuosi haulle. Pakollinen. Sallittu aikaväli: 2022-2025."
+          description: "Start year. Required. Range: 2022-2025."
           required: true
           schema:
             type: integer
@@ -33,7 +26,7 @@ paths:
           example: 2023
         - name: yearTo
           in: query
-          description: "Päättymisvuosi haulle. Pakollinen. Sallittu aikaväli: 2022-2025."
+          description: "End year. Required. Range: 2022-2025."
           required: true
           schema:
             type: integer
@@ -42,7 +35,7 @@ paths:
           example: 2023
         - name: monthFrom
           in: query
-          description: "Aloituskuukausi (1-12). Jos 'yearFrom' on 2022, 'monthFrom' täytyy olla >= 4 (huhtikuu)."
+          description: "Start month (1-12). If yearFrom is 2022, must be >= 4."
           schema:
             type: integer
             minimum: 1
@@ -50,7 +43,7 @@ paths:
           example: 4
         - name: monthTo
           in: query
-          description: "Päättymiskuukausi (1-12). Jos 'yearTo' on 2025, 'monthTo' täytyy olla <= 4 (huhtikuu)."
+          description: "End month (1-12). If yearTo is 2025, must be <= 4."
           schema:
             type: integer
             minimum: 1
@@ -58,51 +51,34 @@ paths:
           example: 12
         - name: momentti
           in: query
-          description: "Talousarvion momentin tunnus (esim. '28.50.01') tai osa momentin nimestä (esim. 'Yleinen tuomioistuinlaitos', 'Työttömyysetuudet'). Haku on yleensä kirjainkoosta riippumaton."
+          description: "Budget item ID or part of name (e.g., '28.50.01')."
           schema:
             type: string
-          example: "Työttömyysetuudet" # Esimerkki voi sisältää suomalaisia merkkejä
+          example: "28.50.01"
         - name: hallinnonala
           in: query
-          description: "Hallinnonalan numeerinen tunnus (esim. '12' Oikeusministeriölle) tai nimi. Tarkista tuetut arvot."
+          description: "Administrative branch ID or name (e.g., '12')."
           schema:
-            type: string 
+            type: string
           example: "12"
         - name: tilivirasto
           in: query
-          description: "Tiliviraston numeerinen tunnus (esim. '286' Tuomioistuinlaitokselle) tai nimi. Tarkempi kuin hallinnonala."
+          description: "Accounting office ID or name (e.g., '286')."
           schema:
             type: string
           example: "286"
       responses:
         "200":
-          description: |
-            Onnistunut vastaus CSV-muodossa. Ensimmäinen rivi sisältää sarakeotsikot.
-            Pilkku (,) toimii erottimena. Kentät, jotka sisältävät erikoismerkkejä (pilkku, rivinvaihto, lainausmerkki), 
-            on ympäröity tuplalainausmerkeillä RFC 4180 -standardin mukaisesti.
-            Varsinainen API-vastaus voi sisältää suomalaisia merkkejä (ä, ö, å) UTF-8 enkoodattuna.
+          description: Successful CSV response. First row is header. Comma delimited.
           content:
-            text/csv: 
+            text/csv:
               schema:
                 type: string
-                # Tämä YAML-tiedoston sisäinen esimerkki käyttää ASCII-vastineita sarakenimissä ja esimerkkisisällössä
-                # YAML-parserin toiminnan varmistamiseksi importointivaiheessa.
-                # Todellinen API-vastaus voi ja sen pitäisi sisältää oikeat suomalaiset merkit (esim. "Nettokertymä", "Valtion taidemuseo (arviomääräraha)").
+                # This example string within the YAML is pure ASCII.
+                # The actual API response can and should still contain UTF-8 Finnish characters.
                 example: |
                   Vuosi,Kk,Hallinnonala,Momentti_TunnusP,Momentti_sNimi,Voimassaoleva_talousarvio,Nettokertyma
                   2023,6,"Opetus ja kulttuuriministerio","29.40.51","Valtion taidemuseo (arviomaararaha)",100000.00,50000.00
                   2024,1,"Sosiaali ja terveysministerio","33.10.01","Tyottomyysturvan menot (siirtomaararaha)",2500000000.00,200000000.00
-        "400":
-          description: "Virheellinen pyyntö. Yksi tai useampi parametri on virheellinen tai puuttuu."
-          content:
-            text/plain; charset=utf-8: # Virheilmoitukset tekstinä, UTF-8 mukainen
-              schema:
-                type: string
-                example: "Virheellinen parametri 'yearFrom'. Arvon tulee olla välillä 2022-2025."
-        "500":
-          description: "Sisäinen palvelinvirhe. Palvelimella tapahtui odottamaton virhe."
-          content:
-            text/plain; charset=utf-8:
-              schema:
-                type: string
-                example: "Sisäinen palvelinvirhe. Yritä myöhemmin uudelleen."
+        # For simplicity in this import attempt, explicit error responses (400, 500 etc.) are omitted.
+        # They can be added back once basic import is successful.
