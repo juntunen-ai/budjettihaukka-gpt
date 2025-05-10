@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: Budjettihaukka GPT API
   description: Hakee ja muuntaa valtiontalouden dataa Tutkihallintoa.fi-palvelusta ChatGPT:n käyttöön.
