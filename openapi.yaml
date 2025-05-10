@@ -3,12 +3,12 @@ info:
   title: ValtioData plugin API
   version: "0.1"
   description: |
-    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun.
+    Budjettihaukka-GPT:n käyttämä rajapinta Suomen valtion budjettitalouden tapahtumien hakuun (huhtikuu 2022 – huhtikuu 2025).
 servers:
- - url: https://api.tutkihallintoa.fi/valtiontalous/v1
+  - url: https://api.tutkihallintoa.fi/valtiontalous/v1
 
 paths:
-  /budjettidata:
+  /budjettitaloudentapahtumat:
     get:
       operationId: getBudgetData
       summary: Hakee budjettitalouden tapahtumia Tutkihallintoa-rajapinnasta.
@@ -47,50 +47,21 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        Vuosi:
-                          type: integer
-                        Kk:
-                          type: integer
-                        Hallinnonala:
-                          type: string
-                        Kirjanpitoyksikkö:
-                          type: string
-                        PaaluokkaOsasto_sNimi:
-                          type: string
-                        Luku_sNimi:
-                          type: string
-                        Momentti_TunnusP:
-                          type: string
-                        Momentti_sNimi:
-                          type: string
-                        Tililuokka_sNimi:
-                          type: string
-                        Tiliryhma_sNimi:
-                          type: string
-                        Tililaji_sNimi:
-                          type: string
-                        Alkuperäinen_talousarvio:
-                          type: number
-                        Lisätalousarvio:
-                          type: number
-                        Voimassaoleva_talousarvio:
-                          type: number
-                        Käytettävissä:
-                          type: number
-                        Alkusaldo:
-                          type: number
-                        Nettokertymä_ko_vuodelta:
-                          type: number
-                        NettoKertymaAikVuosSiirrt:
-                          type: number
-                        Nettokertymä:
-                          type: number
-                        Loppusaldo:
-                          type: number
+                type: array
+                items:
+                  type: object
+                  properties:
+                    Vuosi:
+                      type: integer
+                    Kk:
+                      type: integer
+                    Hallinnonala:
+                      type: string
+                    Momentti_TunnusP:
+                      type: string
+                    Momentti_sNimi:
+                      type: string
+                    Voimassaoleva_talousarvio:
+                      type: number
+                    Nettokertymä:
+                      type: number
